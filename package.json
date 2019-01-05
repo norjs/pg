@@ -1,5 +1,5 @@
 {
-  "name": "nor-pg",
+  "name": "@norjs/pg",
   "version": "1.3.0",
   "description": "PostgreSQL library with Promises for Node.js",
   "main": "src/index.js",
@@ -21,11 +21,12 @@
   "dependencies": {
     "@norjs/debug": "^1.3.0",
     "@norjs/is": "^1.3.0",
-    "nor-extend": "^1.3.2",
+    "@norjs/extend": "^1.3.2",
     "pg": "^7.7.1",
     "pg-escape": "^0.2.0"
   },
   "devDependencies": {
+    "@norjs/pgrunner": "^1.3.2",
     "@babel/cli": "^7.2.3",
     "@babel/core": "^7.2.2",
     "@babel/preset-env": "^7.2.3",
@@ -34,7 +35,7 @@
     "lint": "^1.1.2",
     "mocha": "^5.0.4",
     "mocha-lcov-reporter": "^1.3.0",
-    "nor-pgrunner": "^1.3.1"
+    "q": "^1.5.1"
   },
   "author": "Jaakko-Heikki Heusala <jheusala@iki.fi>",
   "license": "MIT",

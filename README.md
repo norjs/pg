@@ -1,5 +1,5 @@
-nor-pg
-======
+@norjs/pg (Originally [sendanor/nor-pg](https://github.com/sendanor/nor-pg))
+=========================================
 
 Promise-based PostgreSQL library for Node.js
 
@@ -7,10 +7,10 @@ Usage example
 -------------
 
 ```javascript
-var PostgreSQL = require('nor-pg');
-PostgreSQL.start('postgres://username:password@localhost/dbname').query('SELECT * FROM foo').then(function(db) {
-	var rows = db.fetch();
-	console.log(util.inspect(rows));
+import PostgreSQL from '@norjs/pg';
+PostgreSQL.start('postgres://username:password@localhost/dbname').query('SELECT * FROM foo').then((db) => {
+	let rows = db.fetch();
+	console.log(rows);
 	return db;
 }).commit();
 ```
@@ -18,18 +18,18 @@ PostgreSQL.start('postgres://username:password@localhost/dbname').query('SELECT 
 Installing
 ----------
 
-You can install the module from NPM: `npm install nor-pg`
+You can install the module from NPM: `npm install @norjs/pg`
 
 ...and use it in your code:
 
 ```javascript
-var PostgreSQL = require('nor-pg');
+import PostgreSQL from '@norjs/pg';
 ```
 
 Events usage example
 --------------------
 
-`nor-pg` also implements PostgreSQL's `NOTIFY` and `LISTEN` with a familiar 
+`@norjs/pg` also implements PostgreSQL's `NOTIFY` and `LISTEN` with a familiar 
 looking Node.js interface.
 
 You can listen your events through PostgreSQL server like this:
@@ -94,9 +94,10 @@ code).
 
 ### PostgreSQL.start()
 
-Creates [new PostgreSQL instance](https://github.com/sendanor/nor-pg#new-postgresqlconfig),
-[connects it](https://github.com/sendanor/nor-pg#postgresqlprototypeconnect) and 
-[start transaction in it](https://github.com/sendanor/nor-pg#postgresqlprototypestart).
+Creates [new PostgreSQL instance](https://github.com/norjs/pg#new-postgresqlconfig),
+[connects it](https://github.com/norjs/pg#postgresqlprototypeconnect)
+ and 
+[start transaction in it](https://github.com/norjs/pg#postgresqlprototypestart).
 
 Returns an extended promise of PostgreSQL instance after these operations.
 
@@ -114,12 +115,12 @@ PostgreSQL.start('postgres://username:password@localhost/dbname').query('INSERT 
 ### new PostgreSQL(config)
 
 The constructor function. You don't need to use this if you use 
-[`.start()`](https://github.com/sendanor/nor-pg#postgresqlstart).
+[`.start()`](https://github.com/norjs/pg#postgresqlstart).
 
 Returns new instance of PostgreSQL.
 
 ```javascript
-var pg = new PostgreSQL('postgres://username:password@localhost/dbname');
+let pg = new PostgreSQL('postgres://username:password@localhost/dbname');
 pg.connect().start().query('INSERT INTO foo (a, b) VALUES ($1, $2)', [1, 2]).commit().then(function() {
 	util.debug("All OK.");
 }).fail(function(err) {
@@ -135,12 +136,12 @@ pg.connect().start().query('INSERT INTO foo (a, b) VALUES ($1, $2)', [1, 2]).com
 Create connection (or take it from the pool).
 
 You don't need to use this if you use 
-[`.start()`](https://github.com/sendanor/nor-pg#postgresqlstart).
+[`.start()`](https://github.com/norjs/pg#postgresqlstart).
 
 Returns an extended promise of connected PostgreSQL instance.
 
 ```javascript
-var pg = new PostgreSQL('postgres://username:password@localhost/dbname');
+let pg = new PostgreSQL('postgres://username:password@localhost/dbname');
 pg.connect().query('INSERT INTO foo (a, b) VALUES ($1, $2)', [1, 2]).disconnect().then(function() {
 	util.debug("All OK.");
 }).fail(function(err) {
@@ -156,14 +157,16 @@ pg.connect().query('INSERT INTO foo (a, b) VALUES ($1, $2)', [1, 2]).disconnect(
 Disconnect connection (or actually release it back to pool).
 
 You don't need to call this if you use 
-[`.commit()`](https://github.com/sendanor/nor-pg#postgresqlprototypecommit) or 
-[`.rollback()`](https://github.com/sendanor/nor-pg#postgresqlprototyperollback), 
+[`.commit()`](https://github.com/norjs/pg#postgresqlprototypecommit)
+ or 
+[`.rollback()`](https://github
+.com/norjs/pg#postgresqlprototyperollback), 
 which will call `disconnect()`, too.
 
 Returns an extended promise of disconnected PostgreSQL instance.
 
 ```javascript
-var pg = new PostgreSQL('postgres://username:password@localhost/dbname');
+let pg = new PostgreSQL('postgres://username:password@localhost/dbname');
 pg.connect().query('INSERT INTO foo (a, b) VALUES ($1, $2)', [1, 2]).disconnect().then(function() {
 	util.debug("All OK.");
 }).fail(function(err) {
@@ -182,7 +185,7 @@ Returns a promise of the result of the query directly. No results are saved to
 the result queue.
 
 ```javascript
-var pg = new PostgreSQL('postgres://username:password@localhost/dbname');
+let pg = new PostgreSQL('postgres://username:password@localhost/dbname');
 pg.connect()._query('SELECT FROM foo WHERE a = $1', [1]).then(function(rows) {
 	util.debug("Rows = " + util.inspect(rows) );
 	return pg.disconnect();
@@ -199,13 +202,14 @@ pg.connect()._query('SELECT FROM foo WHERE a = $1', [1]).then(function(rows) {
 The default query implementation.
 
 The result of the query can be fetched from the result queue of PostgreSQL 
-object using [`.fetch()`](https://github.com/sendanor/nor-pg#postgresqlprototypefetch).
+object using [`.fetch()`](https://github
+.com/norjs/pg#postgresqlprototypefetch).
 
 Returns an extended promise of the instance of PostgreSQL object.
 
 ```javascript
 PostgreSQL.start('postgres://username:password@localhost/dbname').query('SELECT FROM foo WHERE a = $1', [1]).then(function(pg) {
-	var rows = pg.fetch();
+	let rows = pg.fetch();
 	util.debug("Rows = " + util.inspect(rows) );
 	return pg.commit();
 }).fail(function(err) {
@@ -221,15 +225,16 @@ PostgreSQL.start('postgres://username:password@localhost/dbname').query('SELECT 
 Start transaction.
 
 It will create new instance of PostgreSQL, then call 
-[`.connect()`](https://github.com/sendanor/nor-pg#postgresqlprototypeconnect) 
+[`.connect()`](https://github
+.com/norjs/pg#postgresqlprototypeconnect) 
 and 
-[`.start()`](https://github.com/sendanor/nor-pg#postgresqlprototypestart).
+[`.start()`](https://github.com/norjs/pg#postgresqlprototypestart).
 
 Returns an extended promise of the instance of PostgreSQL object after these operations.
 
 ```javascript
 PostgreSQL.start('postgres://username:password@localhost/dbname').query('SELECT FROM foo WHERE a = $1', [1]).then(function(pg) {
-	var rows = pg.fetch();
+	let rows = pg.fetch();
 	util.debug("Rows = " + util.inspect(rows) );
 	return pg.commit();
 }).fail(function(err) {
@@ -243,13 +248,14 @@ PostgreSQL.start('postgres://username:password@localhost/dbname').query('SELECT 
 ### PostgreSQL.prototype.commit()
 
 Commits transaction. This will also call 
-[`.disconnect()`](https://github.com/sendanor/nor-pg#postgresqlprototypedisconnect).
+[`.disconnect()`](https://github
+.com/norjs/pg#postgresqlprototypedisconnect).
 
 Returns an extended promise of the instance of PostgreSQL object after these operations.
 
 ```javascript
 PostgreSQL.start('postgres://username:password@localhost/dbname').query('SELECT FROM foo WHERE a = $1', [1]).then(function(pg) {
-	var rows = pg.fetch();
+	let rows = pg.fetch();
 	util.debug("Rows = " + util.inspect(rows) );
 	return pg.commit();
 }).fail(function(err) {
@@ -263,13 +269,14 @@ PostgreSQL.start('postgres://username:password@localhost/dbname').query('SELECT 
 ### PostgreSQL.prototype.rollback()
 
 Rollback transaction. This will also call 
-[`.disconnect()`](https://github.com/sendanor/nor-pg#postgresqlprototypedisconnect).
+[`.disconnect()`](https://github
+.com/norjs/pg#postgresqlprototypedisconnect).
 
 Returns an extended promise of the instance of PostgreSQL object after these operations.
 
 ```javascript
 PostgreSQL.start('postgres://username:password@localhost/dbname').query('...').query('SELECT * FROM foo WHERE a = $1', [1]).then(function(pg) {
-	var rows = pg.fetch();
+	let rows = pg.fetch();
 	util.debug("Rows = " + util.inspect(rows) );
 	if(rows.length >= 3) {
 		return pg.rollback();
@@ -293,7 +300,7 @@ This is implemented at [ActionObject of nor-extend](https://github.com/Sendanor/
 
 ```javascript
 PostgreSQL.start('postgres://username:password@localhost/dbname').query('SELECT * FROM foo').then(function(pg) {
-	var rows = pg.fetch();
+	let rows = pg.fetch();
 	util.debug("Rows = " + util.inspect(rows) );
 	return pg.commit();
 }).fail(function(err) {
@@ -308,7 +315,7 @@ PostgreSQL.start('postgres://username:password@localhost/dbname').query('SELECT 
 This is a helper function for implementing rollback handler for failed operations.
 
 ```javascript
-var scope = pg.scope();
+let scope = pg.scope();
 pg.start(opts.pg).then(pg.scope(scope)).query('...').then(...).commit().fail(scope.rollback)
 ```
 
@@ -317,4 +324,4 @@ pg.start(opts.pg).then(pg.scope(scope)).query('...').then(...).commit().fail(sco
 Commercial Support
 ------------------
 
-You can buy commercial support from [Sendanor](http://sendanor.com/software).
+You can buy commercial support from [Sendanor](http://sendanor.com/).

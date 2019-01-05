@@ -9,8 +9,8 @@ import is from '@norjs/is';
 import { Pool } from 'pg';
 import {Async, promiseCall} from './Async.js';
 import EventEmitter from 'events';
-import extend from 'nor-extend';
-import ActionObjectNoEvents from 'nor-extend/ActionObjectNoEvents.js';
+import extend from '@norjs/extend';
+import ActionObjectNoEvents from '@norjs/extend/ActionObjectNoEvents.js';
 import pg_escape from 'pg-escape';
 
 let privateQuery;
