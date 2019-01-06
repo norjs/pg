@@ -6,12 +6,15 @@
 
 import debug from '@norjs/debug';
 import is from '@norjs/is';
-import { Pool } from 'pg';
 import {Async, promiseCall} from './Async.js';
 import EventEmitter from 'events';
 import extend from '@norjs/extend';
 import ActionObjectNoEvents from '@norjs/extend/ActionObjectNoEvents.js';
 import pg_escape from 'pg-escape';
+
+import { Pool, types } from 'pg';
+
+export { types };
 
 let privateQuery;
 
@@ -139,7 +142,7 @@ function handle_res (self, res) {
 /**
  *
  */
-class PostgreSQL extends ActionObjectNoEvents {
+export class PostgreSQL extends ActionObjectNoEvents {
 
 	/** PostgreSQL connection constructor
 	 *
@@ -419,7 +422,7 @@ function strip_res (result) {
 }
 
 /* Internal query transaction */
-privateQuery = ActionObjectNoEvents.setup(PostgreSQL, 'query', function(str, params) {
+privateQuery = PostgreSQL.query = ActionObjectNoEvents.setup(PostgreSQL, 'query', function(str, params) {
 	let conn = this._conn;
 	if (conn === undefined) {
 		throw new TypeError("Disconnected from PostgreSQL");
