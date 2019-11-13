@@ -4,6 +4,9 @@ test="$1"
 
 set -e
 
+LC_ALL="en_US.UTF-8"
+LC_CTYPE="en_US.UTF-8"
+
 function finish {
 	./node_modules/.bin/norjs-pgrunner destroy
 }
