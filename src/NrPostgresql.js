@@ -9,8 +9,7 @@ import pg_escape from 'pg-escape';
 import { Pool, types } from 'pg';
 import LogUtils from "@norjs/utils/Log";
 import AssertUtils from "@norjs/utils/Assert";
-
-export { types };
+import { NrPgOID } from "./NrPostgresqlTypes";
 
 const nrLog = LogUtils.getLogger("NrPostgreSQL");
 
@@ -593,6 +592,19 @@ export class NrPostgreSQL {
 	}
 
 	/**
+	 * Fetch all values from the result buffer
+	 *
+	 * @returns {Array<*>}
+	 */
+	fetchAll () {
+
+		const all = this._resultBuffer;
+		this._resultBuffer = [];
+		return all;
+
+	}
+
+	/**
 	 *
 	 * @param pool {{connect: function}}
 	 * @returns {Promise<{client, done}>}
@@ -641,6 +653,25 @@ export class NrPostgreSQL {
 				reject(err);
 			}
 		});
+
+	}
+
+	/**
+	 *
+	 * @returns {typeof NrPgOID}
+	 */
+	static get OID () {
+		return NrPgOID;
+	}
+
+	/**
+	 *
+	 * @param type {NrPgOID|number}
+	 * @param f {function(*): *}
+	 */
+	static setTypeParser (type, f) {
+
+		types.setTypeParser(type, f);
 
 	}
 
