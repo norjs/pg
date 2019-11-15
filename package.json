@@ -21,7 +21,7 @@
     "pg-escape": "^0.2.0"
   },
   "devDependencies": {
-    "@norjs/pgrunner": "^2.0.0",
+    "@norjs/pgrunner": "^2.0.1",
     "jshint": "^2.9.2",
     "lint": "^1.1.2",
     "mocha": "^5.0.4",
