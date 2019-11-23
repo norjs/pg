@@ -38,6 +38,14 @@ export class NrPostgreSQL {
 		return PgQueryUtils.Symbol;
 	}
 
+    /**
+     *
+     * @returns {typeof PgSelectOptions}
+     */
+	static get SelectOptions () {
+	    return PgSelectOptions;
+    }
+
 	/**
 	 *
 	 * @returns {typeof NrPgOID}
@@ -477,6 +485,49 @@ export class NrPostgreSQL {
 	}
 
 	/**
+	 * Perform a query inside a transaction.
+	 *
+	 * @param pgconfig {string} The database configuration string
+	 * @param str {string} Query string
+	 * @param [params] {Array.<*>|undefined} Query params
+	 * @returns {Promise.<Array<Object>>}
+	 */
+	static async query (pgconfig, str, params = undefined) {
+
+		AssertUtils.isString(pgconfig);
+		AssertUtils.isString(str);
+		if (params !== undefined) AssertUtils.isObject(params);
+
+		nrLog.trace(`${this.nrName}.query(): Initializing transaction...`);
+
+		const db = await this.start(pgconfig);
+
+		let rows = undefined;
+
+		try {
+
+			await db.query(str, params);
+
+			rows = db.fetch();
+
+			await db.commit();
+
+		} catch (err) {
+
+			nrLog.trace(`${this.nrName}.query(): Rollback because error: `, err);
+			await db.rollback();
+
+			throw err;
+
+		}
+
+		nrLog.trace(`${this.nrName}.query(): rows: `, rows);
+
+		return rows;
+
+	}
+
+	/**
 	 * Update rows in table.
 	 *
 	 * @param pgconfig {string} The database configuration string
@@ -532,14 +583,16 @@ export class NrPostgreSQL {
 	 *
 	 * @param pgconfig {string} The database configuration string
 	 * @param table {string} The table name
-	 * @param where {Object.<string,string>} Which rows to update
+	 * @param [where] {Object.<string,string>|PgSelectOptions|undefined} Which rows to update
+	 * @param [options] {PgSelectOptions|undefined} Which rows to update
 	 * @returns {Promise.<Array<Object>>}
 	 */
-	static async select (pgconfig, table, where) {
+	static async select (pgconfig, table, where = undefined, options = undefined) {
 
 		AssertUtils.isString(pgconfig);
 		AssertUtils.isString(table);
-		AssertUtils.isObject(where);
+		if (where !== undefined) AssertUtils.isObject(where);
+		if (options !== undefined) AssertUtils.isObject(options);
 
 		nrLog.trace(`${this.nrName}.select(): Initializing transaction...`);
 
@@ -549,7 +602,7 @@ export class NrPostgreSQL {
 
 		try {
 
-			await db.select(table, where);
+			await db.select(table, where, options);
 
 			rows = db.fetch();
 
@@ -620,14 +673,16 @@ export class NrPostgreSQL {
 	 * Select rows from a table.
 	 *
 	 * @param table {string} The table name
-	 * @param where {Object.<string,string>} Which rows to update
+	 * @param [where] {Object.<string,string>|PgSelectOptions|undefined} Which rows to update
+	 * @param [options] {PgSelectOptions|undefined} Which rows to update
 	 */
-	async select (table, where) {
+	async select (table, where = undefined, options = undefined) {
 
 		AssertUtils.isString(table);
-		AssertUtils.isObject(where);
+		if ( where !== undefined ) AssertUtils.isObject(where);
+		if ( options !== undefined ) AssertUtils.isObject(options);
 
-		const query = PgQueryUtils.createSelectQuery(table, where);
+		const query = PgQueryUtils.createSelectQuery(table, where, options);
 
 		nrLog.debug(`${this.nrName}.prototype.select(): Executing query "${query.queryString}" with values: `, query.queryValues);
 

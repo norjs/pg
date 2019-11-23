@@ -3,6 +3,7 @@ import LogUtils from "@norjs/utils/src/LogUtils";
 import PgQuery from "./PgQuery";
 import AssertUtils from "@norjs/utils/src/AssertUtils";
 import { PgQuerySymbol } from "./PgQuerySymbol";
+import { PgSelectOptions } from "./PgSelectOptions";
 
 const MODULE_NAME = 'PgQueryUtils';
 
@@ -35,6 +36,14 @@ export class PgQueryUtils {
      */
     static get PgQuery () {
         return PgQuery;
+    }
+
+    /**
+     *
+     * @returns {typeof PgSelectOptions}
+     */
+    static get SelectOptions () {
+        return PgSelectOptions;
     }
 
     /**
@@ -233,28 +242,16 @@ export class PgQueryUtils {
 
         }
 
-        const whereList = _.map(Object.keys(where), key => {
-
-            const value = where[key];
-
-            if ( value === PgQuerySymbol.NOW ) {
-                return `${key} = NOW()`;
-            }
-
-            const valueIndex = queryValues.indexOf(value);
-
-            if (valueIndex >= 0) {
-                return `${key} = $${valueIndex + 1}`;
-            }
-
-            queryValues.push(value);
-
-            return `${key} = $${queryValues.length}`;
-
-        });
+        const whereList = this._parseWhereList(queryValues, where);
 
         // FIXME: Escape table name
-        const queryString = `UPDATE "${table}" SET ${ sets.join(', ') } WHERE ${ whereList.join(' AND ') } RETURNING *`;
+        let queryString = `UPDATE "${table}" SET ${ sets.join(', ') }`;
+
+        if ( whereList && whereList.length ) {
+            queryString += ` WHERE ${ whereList.join(' AND ') }`;
+        }
+
+        queryString += ` RETURNING *`;
 
         return new PgQuery(queryString, queryValues);
 
@@ -263,15 +260,65 @@ export class PgQueryUtils {
     /**
      *
      * @param table {string} The table name
-     * @param where {Object.<string, string|Symbol>} Which rows to match
+     * @param [where] {Object.<string, string|Symbol>|PgSelectOptions|undefined} Which rows to match
+     * @param [options] {PgSelectOptions|undefined}
      * @returns {PgQuery}
      * @fixme Keyword names should be escaped
      */
-    static createSelectQuery (table, where) {
+    static createSelectQuery (table, where = undefined, options = undefined) {
+
+        if ( where instanceof PgSelectOptions ) {
+
+            AssertUtils.isUndefined(options);
+
+            options = where;
+
+            where = options.where;
+
+        } else {
+
+            if ( options === undefined ) {
+                options = new PgSelectOptions();
+            }
+
+            options.setWhere(where);
+
+        }
+
+        AssertUtils.isString(table);
+        if (where !== undefined) AssertUtils.isObject(where);
+        AssertUtils.isInstanceOf(options, PgSelectOptions);
 
         const queryValues = [];
 
-        const whereList = _.map(Object.keys(where), key => {
+        const whereList = this._parseWhereList(queryValues, where);
+
+        // FIXME: Escape table name
+        let queryString = `SELECT * FROM "${table}"`;
+
+        if ( whereList && whereList.length ) {
+            queryString += ` WHERE ${ whereList.join(' AND ') }`;
+        }
+
+        const orderBy = options.orderBy;
+        if ( orderBy && orderBy.length ) {
+            queryString += ` ORDER BY ${ orderBy.join(', ') }`;
+        }
+
+        return new PgQuery(queryString, queryValues);
+
+    }
+
+    /**
+     *
+     * @param queryValues {Array.<*>}
+     * @param where {Object.<string, string|Symbol>|undefined}
+     * @returns {any}
+     * @private
+     */
+    static _parseWhereList (queryValues, where) {
+
+        return where !== undefined ? _.map(Object.keys(where), key => {
 
             const value = where[key];
 
@@ -289,12 +336,7 @@ export class PgQueryUtils {
 
             return `${key} = $${queryValues.length}`;
 
-        });
-
-        // FIXME: Escape table name
-        const queryString = `SELECT * FROM "${table}" WHERE ${ whereList.join(' AND ') }`;
-
-        return new PgQuery(queryString, queryValues);
+        }) : undefined;
 
     }
 

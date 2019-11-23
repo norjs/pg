@@ -647,6 +647,75 @@ describe(TEST_SUBJECT_NAME, () => {
 
         });
 
+        it('can create an select query with orderBy using PgSelectOptions', () => {
+
+            const options = new PgQueryUtils.SelectOptions();
+
+            options.setWhere({
+                id: 1234
+            });
+
+            options.setOrderBy(["created"]);
+
+            const query = PgQueryUtils.createSelectQuery(TEST_TABLE, options);
+
+            AssertUtils.isInstanceOf(query, PgQueryUtils.PgQuery);
+
+            AssertUtils.isEqual(query.queryString, `SELECT * FROM "test_account" WHERE id = $1 ORDER BY created`);
+
+            AssertUtils.isArray(query.queryValues);
+            AssertUtils.isEqual(query.queryValues.length, 1);
+
+            AssertUtils.isEqual(query.queryValues[0], 1234);   // $1: id
+
+        });
+
+        it('can create an select query with orderBy using where and PgSelectOptions', () => {
+
+            const where = {
+                id: 1234
+            };
+
+            const options = new PgQueryUtils.SelectOptions();
+
+            options.setOrderBy(["created"]);
+
+            const query = PgQueryUtils.createSelectQuery(TEST_TABLE, where, options);
+
+            AssertUtils.isInstanceOf(query, PgQueryUtils.PgQuery);
+
+            AssertUtils.isEqual(query.queryString, `SELECT * FROM "test_account" WHERE id = $1 ORDER BY created`);
+
+            AssertUtils.isArray(query.queryValues);
+            AssertUtils.isEqual(query.queryValues.length, 1);
+
+            AssertUtils.isEqual(query.queryValues[0], 1234);   // $1: id
+
+        });
+
+        it('can create an select query with multiple orderBys using PgSelectOptions', () => {
+
+            const options = new PgQueryUtils.SelectOptions();
+
+            options.setWhere({
+                id: 1234
+            });
+
+            options.setOrderBy(["created", "id"]);
+
+            const query = PgQueryUtils.createSelectQuery(TEST_TABLE, options);
+
+            AssertUtils.isInstanceOf(query, PgQueryUtils.PgQuery);
+
+            AssertUtils.isEqual(query.queryString, `SELECT * FROM "test_account" WHERE id = $1 ORDER BY created, id`);
+
+            AssertUtils.isArray(query.queryValues);
+            AssertUtils.isEqual(query.queryValues.length, 1);
+
+            AssertUtils.isEqual(query.queryValues[0], 1234);   // $1: id
+
+        });
+
     });
 
 });
