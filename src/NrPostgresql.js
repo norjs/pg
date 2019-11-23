@@ -11,6 +11,7 @@ import LogUtils from "@norjs/utils/Log";
 import AssertUtils from "@norjs/utils/Assert";
 import { NrPgOID } from "./NrPgOID";
 import PgQueryUtils from "./PgQueryUtils";
+import { PgSelectOptions } from "./PgSelectOptions";
 
 const nrLog = LogUtils.getLogger("NrPostgreSQL");
 
@@ -93,6 +94,22 @@ export class NrPostgreSQL {
 
 	}
 
+	/**
+	 *
+	 * @returns {typeof NrPostgreSQL}
+	 */
+	get Class () {
+		return NrPostgreSQL;
+	}
+
+	/**
+	 *
+	 * @returns {string}
+	 */
+	get nrName() {
+		return this.Class.nrName;
+	}
+
 	/** PostgreSQL connection constructor
 	 *
 	 * @param config {string}
@@ -153,7 +170,7 @@ export class NrPostgreSQL {
 
 	/** Create connection (or take it from the pool)
 	 *
-	 * @returns {NrPostgreSQL}
+	 * @returns {Promise.<NrPostgreSQL>}
 	 */
 	async connect () {
 
