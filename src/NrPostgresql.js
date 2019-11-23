@@ -10,6 +10,7 @@ import { Pool, types } from 'pg';
 import LogUtils from "@norjs/utils/Log";
 import AssertUtils from "@norjs/utils/Assert";
 import { NrPgOID } from "./NrPgOID";
+import PgQueryUtils from "./PgQueryUtils";
 
 const nrLog = LogUtils.getLogger("NrPostgreSQL");
 
@@ -21,12 +22,67 @@ const NOR_PG_POOL_SIZE = process.env.NOR_PG_POOL_SIZE ? parseInt(process.env.NOR
  */
 export class NrPostgreSQL {
 
+	/**
+	 *
+	 * @returns {string}
+	 */
 	static get nrName () {
 		return "NrPostgreSQL";
 	}
 
-	get _Class () {
-		return NrPostgreSQL;
+	/**
+	 *
+	 * @returns {typeof PgQuerySymbol}
+	 */
+	static get Symbol () {
+		return PgQueryUtils.Symbol;
+	}
+
+	/**
+	 *
+	 * @returns {typeof NrPgOID}
+	 */
+	static get OID () {
+		return NrPgOID;
+	}
+
+	/**
+	 *
+	 * @param type {NrPgOID|number}
+	 * @param f {function(*): *}
+	 */
+	static setTypeParser (type, f) {
+
+		types.setTypeParser(type, f);
+
+	}
+
+	/** Get new connection and start transaction
+	 *
+	 * @param config {string}
+	 * @returns {Promise.<NrPostgreSQL>}
+	 */
+	static async start (config) {
+
+		let pg = new NrPostgreSQL(config);
+
+		await pg.connect();
+
+		return await pg.start();
+
+	}
+
+	/** Get new connection without starting a transaction
+	 *
+	 * @param config
+	 * @returns {Promise.<NrPostgreSQL>}
+	 */
+	static async connect (config) {
+
+		let pg = new NrPostgreSQL(config);
+
+		return await pg.connect();
+
 	}
 
 	/** PostgreSQL connection constructor
@@ -87,117 +143,9 @@ export class NrPostgreSQL {
 
 	}
 
-	// noinspection JSUnusedGlobalSymbols
-	/** Implements `.addListener()` with PostgreSQL listen
-	 *
-	 * @param name
-	 * @param listener
-	 * @returns {*}
-	 * @private
-	 */
-	_addListener (name, listener) {
-
-		AssertUtils.isString(name);
-		AssertUtils.isFunction(listener);
-
-		//nrLog.trace('name =', name, ', listener=', listener);
-
-		this._events.addListener(name, listener);
-
-		return this.listen(name);
-
-	}
-
-	// noinspection JSUnusedGlobalSymbols
-	/** Implements `.removeListener()` with PostgreSQL listen
-	 *
-	 * @param name
-	 * @param listener
-	 * @returns {*}
-	 * @private
-	 */
-	_removeListener (name, listener) {
-
-		AssertUtils.isString(name);
-		AssertUtils.isFunction(listener);
-
-		//nrLog.trace('name =', name, ', listener=', listener);
-
-		this._events.removeListener(name, listener);
-
-		return this.unlisten(name);
-
-	}
-
-	// noinspection JSUnusedGlobalSymbols
-	/** Implements `.on()` with PostgreSQL listen */
-	_on (name, listener) {
-
-		AssertUtils.isString(name);
-		AssertUtils.isFunction(listener);
-
-		//nrLog.trace('name =', name, ', listener=', listener);
-
-		this._events.on(name, listener);
-
-		return this.listen(name);
-
-	}
-
-	// noinspection JSUnusedGlobalSymbols
-	/** Implements `.once()` with PostgreSQL listen and unlisten
-	 *
-	 * @param name
-	 * @param listener
-	 * @returns {*}
-	 * @private
-	 */
-	_once (name, listener) {
-
-		AssertUtils.isString(name);
-		AssertUtils.isFunction(listener);
-
-		//nrLog.trace('name =', name, ', listener=', listener);
-
-		const parentThis = this;
-
-		this._events.once(name, function(...args) {
-			let self2 = this;
-			parentThis.unlisten(name).fail(err => {
-				nrLog.error('Failed to unlisten: ', err);
-			}).done();
-			return listener.apply(self2, args);
-		});
-
-		return this.listen(name);
-
-	}
-
-	// noinspection JSUnusedGlobalSymbols
-	/** Implements `.emit()` with PostgreSQL notify
-	 *
-	 * @param args
-	 * @returns {*}
-	 * @private
-	 */
-	_emit (...args) {
-
-		let name = args.shift();
-		AssertUtils.isString(name);
-
-		//nrLog.trace('name =', name);
-		//nrLog.trace('args =', args);
-		let payload = JSON.stringify(args);
-
-		//nrLog.trace('payload =', payload);
-
-		return this.notify(name, payload);
-
-	}
-
 	/** Create connection (or take it from the pool)
 	 *
-	 * @returns {*|*}
+	 * @returns {NrPostgreSQL}
 	 */
 	async connect () {
 
@@ -344,127 +292,6 @@ export class NrPostgreSQL {
 
 	}
 
-	/** Get new connection and start transaction
-	 *
-	 * @param config {string}
-	 * @returns {Promise.<NrResponse>}
-	 */
-	static async start (config) {
-
-		let pg = new NrPostgreSQL(config);
-
-		await pg.connect();
-
-		return await pg.start();
-
-	}
-
-	/** Get new connection without starting a transaction
-	 *
-	 * @param config
-	 * @returns {Promise.<NrResponse>}
-	 */
-	static async connect (config) {
-
-		let pg = new NrPostgreSQL(config);
-
-		return await pg.connect();
-
-	}
-
-	/**
-	 *
-	 * @param desc {string}
-	 * @param fn {function(...[*]): T}
-	 * @returns {function(...[*]): Promise.<T>}
-	 * @template T
-	 * @private
-	 */
-	static _nr_nfbind (desc, fn) {
-		return (...args) => this._promiseCall(() => fn(...args));
-	}
-
-	/** `result` will have properties client and done from pg.connect()
-	 *
-	 * @param result {Object.<{client, done}>}
-	 * @returns {*}
-	 */
-	_handleResponse (result) {
-
-		//nrLog.trace('_handleResponse()...');
-
-		AssertUtils.isObject(result);
-		AssertUtils.isObject(result.client);
-
-		let client = result.client;
-
-		AssertUtils.isFunction(client.query);
-
-		this._connQuery = this._Class._nr_nfbind("nor-pg:query", client.query.bind(client));
-		this._connDone = result.done;
-		this._connClient = client;
-
-		// Pass NOTIFY to clients
-		if (_.isFunction(this.emit)) {
-			AssertUtils.isFunction(this._notification_listener);
-			client.on('notification', this._notification_listener);
-		}
-
-		return this;
-
-	}
-
-	/** Event listener
-	 *
-	 * @param msg
-	 */
-	_notificationEventListener (msg) {
-
-		//nrLog.trace('msg = ', msg);
-
-		this._events.emit('$notification', msg);
-
-		//msg = {
-		//  name: 'notification',
-		//  length: 70,
-		//  processId: 1707,
-		//  channel: 'tcn',
-		//  payload: '"documents",I,"id"=\'0c402f6f-8126-5dc3-a4df-20035bc8304d\''
-		//}
-
-		/* Parse notification and emit again correctly */
-		let channel = msg && msg.channel || undefined;
-		let payload = msg && msg.payload || undefined;
-
-		//nrLog.trace(
-		//	'channel = ', channel, '\n',
-		//	'payload = ', payload
-		//);
-
-		if ( (payload.charAt(0) !== '[') ) {
-			this._events.emit(channel, payload);
-			return;
-		}
-
-		let parsed_payload;
-
-		try {
-			parsed_payload = JSON.parse(payload);
-		} catch(e) {
-			this._events.emit(channel, payload);
-			return;
-		}
-
-		//nrLog.trace('parsed_payload = ', parsed_payload);
-
-		if (_.isArray(parsed_payload)) {
-			this._events.emit.apply(this._events, [channel].concat(parsed_payload));
-		} else {
-			this._events.emit.apply(this._events, [channel].concat([parsed_payload]));
-		}
-
-	}
-
 	addListener (...args) {
 
 		let name = args[0];
@@ -605,6 +432,210 @@ export class NrPostgreSQL {
 	}
 
 	/**
+	 * Insert rows into table.
+	 *
+	 * @param pgconfig {string} The database configuration string
+	 * @param table {string} The table name
+	 * @param values {Array.<Object>} Values to insert to the table
+	 * @param [bindings] {Object.<string, string>|undefined} Optional bindings between the table keyword and value
+	 * @returns {Promise.<Array<Object>>}
+	 */
+	static async insert (pgconfig, table, values, bindings = undefined) {
+
+		AssertUtils.isString(pgconfig);
+		AssertUtils.isString(table);
+		AssertUtils.isArray(values);
+		if (bindings !== undefined) AssertUtils.isObject(bindings);
+
+		nrLog.trace(`${this.nrName}.insert(): Initializing transaction...`);
+
+		const db = await this.start(pgconfig);
+
+		let rows = undefined;
+
+		try {
+
+			await db.insert(table, values, bindings);
+
+			rows = db.fetch();
+
+			await db.commit();
+
+		} catch (err) {
+
+			nrLog.trace(`${this.nrName}.insert(): Rollback because error: `, err);
+			await db.rollback();
+
+			throw err;
+
+		}
+
+		nrLog.trace(`${this.nrName}.insert(): rows: `, rows);
+
+		return rows;
+
+	}
+
+	/**
+	 * Update rows in table.
+	 *
+	 * @param pgconfig {string} The database configuration string
+	 * @param table {string} The table name
+	 * @param where {Object.<string,string>} Which rows to update
+	 * @param changes {Object} Values to insert to the table
+	 * @param [bindings] {Object.<string, string>|undefined} Optional bindings between the table keyword and value
+	 * @returns {Promise.<Array<Object>>}
+	 */
+	static async update (pgconfig, table, where, changes, bindings = undefined) {
+
+		AssertUtils.isString(pgconfig);
+		AssertUtils.isString(table);
+		AssertUtils.isObject(where);
+		AssertUtils.isObject(changes);
+		if (bindings !== undefined) AssertUtils.isObject(bindings);
+
+		nrLog.trace(`${this.nrName}.update(): Initializing transaction...`);
+
+		/**
+		 *
+		 * @type {NrPostgreSQL}
+		 */
+		const db = await this.start(pgconfig);
+
+		let rows = undefined;
+
+		try {
+
+			await db.update(table, where, changes, bindings);
+
+			rows = db.fetch();
+
+			await db.commit();
+
+		} catch (err) {
+
+			nrLog.trace(`${this.nrName}.update(): Rollback because error: `, err);
+			await db.rollback();
+
+			throw err;
+
+		}
+
+		nrLog.trace(`${this.nrName}.update(): rows: `, rows);
+
+		return rows;
+
+	}
+
+	/**
+	 * Select rows from a table.
+	 *
+	 * @param pgconfig {string} The database configuration string
+	 * @param table {string} The table name
+	 * @param where {Object.<string,string>} Which rows to update
+	 * @returns {Promise.<Array<Object>>}
+	 */
+	static async select (pgconfig, table, where) {
+
+		AssertUtils.isString(pgconfig);
+		AssertUtils.isString(table);
+		AssertUtils.isObject(where);
+
+		nrLog.trace(`${this.nrName}.select(): Initializing transaction...`);
+
+		const db = await this.start(pgconfig);
+
+		let rows = undefined;
+
+		try {
+
+			await db.select(table, where);
+
+			rows = db.fetch();
+
+			await db.commit();
+
+		} catch (err) {
+
+			nrLog.trace(`${this.nrName}.select(): Rollback because error: `, err);
+			await db.rollback();
+
+			throw err;
+
+		}
+
+		nrLog.trace(`${this.nrName}.select(): rows: `, rows);
+
+		return rows;
+
+	}
+
+	/**
+	 * Insert rows into table.
+	 *
+	 * @param table {string} The table name
+	 * @param values {Array.<Object>} Values to insert to the table
+	 * @param [bindings] {Object.<string, string>|undefined} Optional bindings between the table keyword and value
+	 * @returns {Promise.<Array<Object>>}
+	 */
+	async insert (table, values, bindings = undefined) {
+
+		AssertUtils.isString(table);
+		AssertUtils.isArray(values);
+		if (bindings !== undefined) AssertUtils.isObject(bindings);
+
+		const query = PgQueryUtils.createInsertQuery(table, values, bindings);
+
+		nrLog.debug(`${this.nrName}.prototype.insert(): Executing query "${query.queryString}" with values: `, query.queryValues);
+
+		await this.query(query.queryString, query.queryValues);
+
+	}
+
+	/**
+	 * Update rows in a table.
+	 *
+	 * @param table {string} The table name
+	 * @param where {Object.<string,string>} Which rows to update
+	 * @param changes {Object} Values to change in the row
+	 * @param [bindings] {Object.<string, string>|undefined} Optional bindings between the table keyword and value
+	 * @returns {Promise.<Array<Object>>}
+	 */
+	async update (table, where, changes, bindings = undefined) {
+
+		AssertUtils.isString(table);
+		AssertUtils.isObject(where);
+		AssertUtils.isObject(changes);
+		if (bindings !== undefined) AssertUtils.isObject(bindings);
+
+		const query = PgQueryUtils.createUpdateQuery(table, where, changes, bindings);
+
+		nrLog.debug(`${this.nrName}.prototype.update(): Executing query "${query.queryString}" with changes: `, query.queryValues);
+
+		await this.query(query.queryString, query.queryValues);
+
+	}
+
+	/**
+	 * Select rows from a table.
+	 *
+	 * @param table {string} The table name
+	 * @param where {Object.<string,string>} Which rows to update
+	 */
+	async select (table, where) {
+
+		AssertUtils.isString(table);
+		AssertUtils.isObject(where);
+
+		const query = PgQueryUtils.createSelectQuery(table, where);
+
+		nrLog.debug(`${this.nrName}.prototype.select(): Executing query "${query.queryString}" with values: `, query.queryValues);
+
+		await this.query(query.queryString, query.queryValues);
+
+	}
+
+	/**
 	 *
 	 * @param pool {{connect: function}}
 	 * @returns {Promise<{client, done}>}
@@ -641,6 +672,7 @@ export class NrPostgreSQL {
 	 * @param call {function: T}
 	 * @returns {Promise.<T>}
 	 * @template T
+	 * @private
 	 */
 	static async _promiseCall (call) {
 
@@ -658,20 +690,218 @@ export class NrPostgreSQL {
 
 	/**
 	 *
-	 * @returns {typeof NrPgOID}
+	 * @param desc {string}
+	 * @param fn {function(...[*]): T}
+	 * @returns {function(...[*]): Promise.<T>}
+	 * @template T
+	 * @private
 	 */
-	static get OID () {
-		return NrPgOID;
+	static _nr_nfbind (desc, fn) {
+		return (...args) => this._promiseCall(() => fn(...args));
 	}
 
 	/**
 	 *
-	 * @param type {NrPgOID|number}
-	 * @param f {function(*): *}
+	 * @returns {typeof NrPostgreSQL}
+	 * @private
 	 */
-	static setTypeParser (type, f) {
+	get _Class () {
+		return NrPostgreSQL;
+	}
 
-		types.setTypeParser(type, f);
+	// noinspection JSUnusedGlobalSymbols
+	/** Implements `.addListener()` with PostgreSQL listen
+	 *
+	 * @param name
+	 * @param listener
+	 * @returns {*}
+	 * @private
+	 */
+	_addListener (name, listener) {
+
+		AssertUtils.isString(name);
+		AssertUtils.isFunction(listener);
+
+		//nrLog.trace('name =', name, ', listener=', listener);
+
+		this._events.addListener(name, listener);
+
+		return this.listen(name);
+
+	}
+
+	// noinspection JSUnusedGlobalSymbols
+	/** Implements `.removeListener()` with PostgreSQL listen
+	 *
+	 * @param name
+	 * @param listener
+	 * @returns {*}
+	 * @private
+	 */
+	_removeListener (name, listener) {
+
+		AssertUtils.isString(name);
+		AssertUtils.isFunction(listener);
+
+		//nrLog.trace('name =', name, ', listener=', listener);
+
+		this._events.removeListener(name, listener);
+
+		return this.unlisten(name);
+
+	}
+
+	// noinspection JSUnusedGlobalSymbols
+	/** Implements `.on()` with PostgreSQL listen
+	 *
+	 * @param name {string}
+	 * @param listener {function}
+	 * @private
+	 */
+	_on (name, listener) {
+
+		AssertUtils.isString(name);
+		AssertUtils.isFunction(listener);
+
+		//nrLog.trace('name =', name, ', listener=', listener);
+
+		this._events.on(name, listener);
+
+		return this.listen(name);
+
+	}
+
+	// noinspection JSUnusedGlobalSymbols
+	/** Implements `.once()` with PostgreSQL listen and unlisten
+	 *
+	 * @param name
+	 * @param listener
+	 * @returns {*}
+	 * @private
+	 */
+	_once (name, listener) {
+
+		AssertUtils.isString(name);
+		AssertUtils.isFunction(listener);
+
+		//nrLog.trace('name =', name, ', listener=', listener);
+
+		const parentThis = this;
+
+		this._events.once(name, function(...args) {
+			let self2 = this;
+			parentThis.unlisten(name).fail(err => {
+				nrLog.error('Failed to unlisten: ', err);
+			}).done();
+			return listener.apply(self2, args);
+		});
+
+		return this.listen(name);
+
+	}
+
+	// noinspection JSUnusedGlobalSymbols
+	/** Implements `.emit()` with PostgreSQL notify
+	 *
+	 * @param args
+	 * @returns {*}
+	 * @private
+	 */
+	_emit (...args) {
+
+		let name = args.shift();
+		AssertUtils.isString(name);
+
+		//nrLog.trace('name =', name);
+		//nrLog.trace('args =', args);
+		let payload = JSON.stringify(args);
+
+		//nrLog.trace('payload =', payload);
+
+		return this.notify(name, payload);
+
+	}
+
+	/** `result` will have properties client and done from pg.connect()
+	 *
+	 * @param result {Object.<{client, done}>}
+	 * @returns {NrPostgreSQL}
+	 * @private
+	 */
+	_handleResponse (result) {
+
+		//nrLog.trace('_handleResponse()...');
+
+		AssertUtils.isObject(result);
+		AssertUtils.isObject(result.client);
+
+		let client = result.client;
+
+		AssertUtils.isFunction(client.query);
+
+		this._connQuery = this._Class._nr_nfbind("nor-pg:query", client.query.bind(client));
+		this._connDone = result.done;
+		this._connClient = client;
+
+		// Pass NOTIFY to clients
+		if (_.isFunction(this.emit)) {
+			AssertUtils.isFunction(this._notification_listener);
+			client.on('notification', this._notification_listener);
+		}
+
+		return this;
+
+	}
+
+	/** Event listener
+	 *
+	 * @param msg
+	 * @private
+	 */
+	_notificationEventListener (msg) {
+
+		//nrLog.trace('msg = ', msg);
+
+		this._events.emit('$notification', msg);
+
+		//msg = {
+		//  name: 'notification',
+		//  length: 70,
+		//  processId: 1707,
+		//  channel: 'tcn',
+		//  payload: '"documents",I,"id"=\'0c402f6f-8126-5dc3-a4df-20035bc8304d\''
+		//}
+
+		/* Parse notification and emit again correctly */
+		let channel = msg && msg.channel || undefined;
+		let payload = msg && msg.payload || undefined;
+
+		//nrLog.trace(
+		//	'channel = ', channel, '\n',
+		//	'payload = ', payload
+		//);
+
+		if ( (payload.charAt(0) !== '[') ) {
+			this._events.emit(channel, payload);
+			return;
+		}
+
+		let parsed_payload;
+
+		try {
+			parsed_payload = JSON.parse(payload);
+		} catch(e) {
+			this._events.emit(channel, payload);
+			return;
+		}
+
+		//nrLog.trace('parsed_payload = ', parsed_payload);
+
+		if (_.isArray(parsed_payload)) {
+			this._events.emit.apply(this._events, [channel].concat(parsed_payload));
+		} else {
+			this._events.emit.apply(this._events, [channel].concat([parsed_payload]));
+		}
 
 	}
 

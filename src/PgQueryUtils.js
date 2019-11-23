@@ -54,7 +54,7 @@ export class PgQueryUtils {
      *
      * @param table {string} The table name
      * @param values {Array.<Object>} Values to insert to the table
-     * @param [bindings] {Object.<string, string>|undefined} Optional bindings between the table keyword and value
+     * @param [bindings] {Object.<string, string>|undefined} Optional bindings between the table keyword and value property
      * @returns {PgQuery}
      */
     static createInsertQuery (table, values, bindings = undefined) {
@@ -151,10 +151,148 @@ export class PgQueryUtils {
 
         });
 
+        // FIXME: Escape table and/or queryKeys
         const queryString = `INSERT INTO "${table}" (${ queryKeys.join(', ') }) VALUES ${ _.map(queryPlaceholders, item => `(${item.join(',')})`).join(',') } RETURNING *`;
 
-        nrLog.debug(`.createInsertQuery(): queryString = `, queryString);
-        nrLog.debug(`.createInsertQuery(): queryValues = `, queryValues);
+        nrLog.trace(`${this.nrName}.createInsertQuery(): queryString = `, queryString);
+        nrLog.trace(`${this.nrName}.createInsertQuery(): queryValues = `, queryValues);
+
+        return new PgQuery(queryString, queryValues);
+
+    }
+
+    /**
+     *
+     * @param table {string} The table name
+     * @param where {Object.<string, string|Symbol>} Which rows to match
+     * @param changes {Object} New properties to update to the row
+     * @param [bindings] {Object.<string, string>|undefined} Optional bindings between the table keyword and value property
+     * @returns {PgQuery}
+     * @fixme Keyword names should be escaped
+     */
+    static createUpdateQuery (table, where, changes, bindings = undefined) {
+
+        const queryValues = [];
+
+        let sets = undefined;
+
+        if (bindings !== undefined) {
+
+            sets = _.map(Object.keys(bindings), bindingKey => {
+
+                const key = bindings[bindingKey];
+
+                const value = _.get(changes, key, null);
+
+                if ( value === PgQuerySymbol.NOW ) {
+                    return `${bindingKey} = NOW()`;
+                }
+
+                if ( value === PgQuerySymbol.INCREASE ) {
+                    return `${bindingKey} = ${bindingKey} + 1`;
+                }
+
+                const valueIndex = queryValues.indexOf(value);
+
+                if ( valueIndex >= 0 ) {
+                    return `${bindingKey} = $${ valueIndex + 1 }`;
+                }
+
+                queryValues.push(value);
+
+                return `${bindingKey} = $${ queryValues.length }`;
+
+            });
+
+        } else {
+
+            sets = _.map(Object.keys(changes), key => {
+
+                const value = changes[key];
+
+                if ( value === PgQuerySymbol.NOW ) {
+                    return `${key} = NOW()`;
+                }
+
+                if ( value === PgQuerySymbol.INCREASE ) {
+                    return `${key} = ${key} + 1`;
+                }
+
+                const valueIndex = queryValues.indexOf(value);
+
+                if ( valueIndex >= 0 ) {
+                    return `${key} = $${ valueIndex + 1 }`;
+                }
+
+                queryValues.push(value);
+
+                return `${key} = $${ queryValues.length }`;
+
+
+            });
+
+        }
+
+        const whereList = _.map(Object.keys(where), key => {
+
+            const value = where[key];
+
+            if ( value === PgQuerySymbol.NOW ) {
+                return `${key} = NOW()`;
+            }
+
+            const valueIndex = queryValues.indexOf(value);
+
+            if (valueIndex >= 0) {
+                return `${key} = $${valueIndex + 1}`;
+            }
+
+            queryValues.push(value);
+
+            return `${key} = $${queryValues.length}`;
+
+        });
+
+        // FIXME: Escape table name
+        const queryString = `UPDATE "${table}" SET ${ sets.join(', ') } WHERE ${ whereList.join(' AND ') } RETURNING *`;
+
+        return new PgQuery(queryString, queryValues);
+
+    }
+
+    /**
+     *
+     * @param table {string} The table name
+     * @param where {Object.<string, string|Symbol>} Which rows to match
+     * @returns {PgQuery}
+     * @fixme Keyword names should be escaped
+     */
+    static createSelectQuery (table, where) {
+
+        const queryValues = [];
+
+        const whereList = _.map(Object.keys(where), key => {
+
+            const value = where[key];
+
+            if ( value === PgQuerySymbol.NOW ) {
+                return `${key} = NOW()`;
+            }
+
+            const valueIndex = queryValues.indexOf(value);
+
+            if (valueIndex >= 0) {
+                return `${key} = $${valueIndex + 1}`;
+            }
+
+            queryValues.push(value);
+
+            return `${key} = $${queryValues.length}`;
+
+        });
+
+        // FIXME: Escape table name
+        const queryString = `SELECT * FROM "${table}" WHERE ${ whereList.join(' AND ') }`;
 
         return new PgQuery(queryString, queryValues);
 

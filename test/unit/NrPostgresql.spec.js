@@ -78,4 +78,112 @@ describe('NrPostgresql', function(){
 
 	});
 
+	describe('#insert', () => {
+
+		it('is callable', () => {
+			AssertUtils.isFunction(NrPostgresql);
+			AssertUtils.isFunction(NrPostgresql.insert);
+		});
+
+		if (ENABLE_PGCONFIG) {
+
+			it('can insert rows', async () => {
+
+				const values = [
+					{
+						username: "admin@example.com",
+						password: "foobar1",
+						created: NrPostgresql.Symbol.NOW
+					}
+				];
+
+				let rows = await NrPostgresql.insert(PGCONFIG, TEST_TABLE, values);
+
+				AssertUtils.isArray(rows);
+				AssertUtils.isEqual(rows.length, 1);
+				AssertUtils.isEqual(rows[0].username, "admin@example.com");
+				AssertUtils.isEqual(rows[0].password, "foobar1");
+				AssertUtils.isDate(rows[0].created);
+
+			});
+
+		}
+
+	});
+
+	describe('#update', () => {
+
+		it('is callable', () => {
+			AssertUtils.isFunction(NrPostgresql);
+			AssertUtils.isFunction(NrPostgresql.update);
+		});
+
+		if (ENABLE_PGCONFIG) {
+
+			it('can update rows', async () => {
+
+				const where = {
+					username: 'foo2'
+				};
+
+				const changes = {
+					password: "bar999"
+				};
+
+				let rows = await NrPostgresql.update(PGCONFIG, TEST_TABLE, where, changes);
+
+				AssertUtils.isArray(rows);
+				AssertUtils.isEqual(rows.length, 1);
+				AssertUtils.isEqual(rows[0].username, "foo2");
+				AssertUtils.isEqual(rows[0].password, "bar999");
+				AssertUtils.isDate(rows[0].created);
+
+				rows = await NrPostgresql.select(PGCONFIG, TEST_TABLE, where);
+
+				AssertUtils.isArray(rows);
+				AssertUtils.isEqual(rows.length, 1);
+				AssertUtils.isEqual(rows[0].username, "foo2");
+				AssertUtils.isEqual(rows[0].password, "bar999");
+				AssertUtils.isDate(rows[0].created);
+
+				// Reset back to original value
+				await NrPostgresql.update(PGCONFIG, TEST_TABLE, where, {
+					password: "bar2"
+				});
+
+			});
+
+		}
+
+	});
+
+	describe('#select', () => {
+
+		it('is callable', () => {
+			AssertUtils.isFunction(NrPostgresql);
+			AssertUtils.isFunction(NrPostgresql.select);
+		});
+
+		if (ENABLE_PGCONFIG) {
+
+			it('can select rows', async () => {
+
+				const where = {
+					username: 'foo2'
+				};
+
+				let rows = await NrPostgresql.select(PGCONFIG, TEST_TABLE, where);
+
+				AssertUtils.isArray(rows);
+				AssertUtils.isEqual(rows.length, 1);
+				AssertUtils.isEqual(rows[0].username, "foo2");
+				AssertUtils.isEqual(rows[0].password, "bar2");
+				AssertUtils.isDate(rows[0].created);
+
+			});
+
+		}
+
+	});
+
 });
