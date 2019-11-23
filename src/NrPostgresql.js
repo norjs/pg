@@ -9,7 +9,7 @@ import pg_escape from 'pg-escape';
 import { Pool, types } from 'pg';
 import LogUtils from "@norjs/utils/Log";
 import AssertUtils from "@norjs/utils/Assert";
-import { NrPgOID } from "./NrPostgresqlTypes";
+import { NrPgOID } from "./NrPgOID";
 
 const nrLog = LogUtils.getLogger("NrPostgreSQL");
 

@@ -1,84 +1,81 @@
 import AssertUtils from "@norjs/utils/Assert";
+import { TEST_TABLE, TEST_TIMEOUT, PGCONFIG, SRC_DIR, ENABLE_PGCONFIG } from "./test-constants";
 
 /* global describe, it */
 
-const TEST_TABLE = 'test_account';
+let NrPostgresql = require(`${SRC_DIR}/NrPostgresql.js`);
 
-const PGCONFIG = process.env.PGCONFIG || 'pg://postgres@localhost/test';
-const TEST_TIMEOUT = process.env.TEST_TIMEOUT ? parseInt(process.env.TEST_TIMEOUT, 10) : undefined;
-const ENABLE_COVERAGE = !!process.env.ENABLE_COVERAGE;
-
-let pg = ENABLE_COVERAGE ? require('../../src-cov/NrPostgresql.js') : require('../../src/NrPostgresql.js');
-
-if ( pg && pg.default ) {
-	pg = pg.default;
+if ( NrPostgresql && NrPostgresql.default ) {
+	NrPostgresql = NrPostgresql.default;
 }
 
-///** Run init() at start */
-//before(() => pg.start(PGCONFIG).init().then(db => {
-//	//var doc = db.fetch();
-//	//debug.log('initialized database: doc = ', doc);
-//	return db.commit();
-//}));
-
 /* */
-describe('nor-pg', function(){
+describe('NrPostgresql', function(){
 
-	if (TEST_TIMEOUT >= 2000) {
-		this.timeout(TEST_TIMEOUT);
+	if (ENABLE_PGCONFIG) {
+
+		if ( TEST_TIMEOUT >= 2000 ) {
+			this.timeout(TEST_TIMEOUT);
+		}
+
+	} else {
+
+		console.warn(`Warning! Some tests disabled because PostgreSQL was not configured. Setup PGCONFIG and/or see ./run-tests.sh.`);
+
 	}
 
-	describe('.connect', function() {
+	describe('#connect', () => {
 
 		it('is callable', () => {
-			AssertUtils.isFunction(pg);
-			AssertUtils.isFunction(pg.connect);
+			AssertUtils.isFunction(NrPostgresql);
+			AssertUtils.isFunction(NrPostgresql.connect);
 		});
 
 	});
 
-	describe('.start', function() {
+	describe('#start', () => {
 
 		it('is callable', () => {
-			AssertUtils.isFunction(pg);
-			AssertUtils.isFunction(pg.start);
+			AssertUtils.isFunction(NrPostgresql);
+			AssertUtils.isFunction(NrPostgresql.start);
 		});
 
-		it('can query rows', async () => {
+		if (ENABLE_PGCONFIG) {
 
-			let db = await pg.start(PGCONFIG);
+			it('can query rows', async () => {
 
-			db = await db.query(`SELECT * FROM "${TEST_TABLE}"`);
+				let db = await NrPostgresql.start(PGCONFIG);
 
-			AssertUtils.isObject(db);
-			AssertUtils.isCallable(db.fetch);
+				db = await db.query(`SELECT * FROM "${TEST_TABLE}"`);
 
-			const rows = db.fetch();
-			AssertUtils.isArray(rows);
-			AssertUtils.isEqual(rows.length, 3);
+				AssertUtils.isObject(db);
+				AssertUtils.isCallable(db.fetch);
 
-			AssertUtils.isObject(rows[0]);
-			AssertUtils.isEqual(rows[0].username, "foo1");
-			AssertUtils.isEqual(rows[0].password, "bar1");
-			AssertUtils.isEqual(rows[0].created.getTime(), 1403211600000);
+				const rows = db.fetch();
+				AssertUtils.isArray(rows);
+				AssertUtils.isEqual(rows.length, 3);
 
-			AssertUtils.isObject(rows[1]);
-			AssertUtils.isEqual(rows[1].username, "foo2");
-			AssertUtils.isEqual(rows[1].password, "bar2");
-			AssertUtils.isEqual(rows[1].created.getTime(), 1543701600000);
+				AssertUtils.isObject(rows[0]);
+				AssertUtils.isEqual(rows[0].username, "foo1");
+				AssertUtils.isEqual(rows[0].password, "bar1");
+				AssertUtils.isEqual(rows[0].created.getTime(), 1403211600000);
 
-			AssertUtils.isObject(rows[2]);
-			AssertUtils.isEqual(rows[2].username, "foo3");
-			AssertUtils.isEqual(rows[2].password, "bar3");
-			AssertUtils.isEqual(rows[2].created.getTime(), 1547071200000);
+				AssertUtils.isObject(rows[1]);
+				AssertUtils.isEqual(rows[1].username, "foo2");
+				AssertUtils.isEqual(rows[1].password, "bar2");
+				AssertUtils.isEqual(rows[1].created.getTime(), 1543701600000);
 
-			await db.commit();
+				AssertUtils.isObject(rows[2]);
+				AssertUtils.isEqual(rows[2].username, "foo3");
+				AssertUtils.isEqual(rows[2].password, "bar3");
+				AssertUtils.isEqual(rows[2].created.getTime(), 1547071200000);
 
-		});
+				await db.commit();
+
+			});
+
+		}
 
 	});
 
 });
-
-/* EOF */
-
