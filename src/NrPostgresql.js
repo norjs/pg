@@ -33,6 +33,14 @@ export class NrPostgreSQL {
 
 	/**
 	 *
+	 * @param logLevel {LogLevel|string}
+	 */
+	static setLogLevel (logLevel) {
+		nrLog.setLogLevel(logLevel);
+	}
+
+	/**
+	 *
 	 * @returns {typeof PgQuerySymbol}
 	 */
 	static get Symbol () {

@@ -1,5 +1,6 @@
 import AssertUtils from "@norjs/utils/Assert";
 import { TEST_TABLE, TEST_TIMEOUT, PGCONFIG, SRC_DIR, ENABLE_PGCONFIG } from "./test-constants";
+import LogUtils from "@norjs/utils";
 
 /* global describe, it */
 
@@ -8,6 +9,8 @@ let NrPostgresql = require(`${SRC_DIR}/NrPostgresql.js`);
 if ( NrPostgresql && NrPostgresql.default ) {
 	NrPostgresql = NrPostgresql.default;
 }
+
+NrPostgresql.setLogLevel(LogUtils.Logger.LogLevel.WARN);
 
 /* */
 describe('NrPostgresql', function(){
