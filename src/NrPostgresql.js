@@ -12,6 +12,7 @@ import AssertUtils from "@norjs/utils/Assert";
 import { NrPgOID } from "./NrPgOID";
 import PgQueryUtils from "./PgQueryUtils";
 import { PgSelectOptions } from "./PgSelectOptions";
+import { PgOperator } from "./PgOperator";
 
 const nrLog = LogUtils.getLogger("NrPostgreSQL");
 
@@ -53,6 +54,14 @@ export class NrPostgreSQL {
      */
 	static get SelectOptions () {
 	    return PgSelectOptions;
+    }
+
+    /**
+     *
+     * @returns {typeof PgOperator}
+     */
+	static get Operator () {
+	    return PgOperator;
     }
 
 	/**

@@ -4,8 +4,15 @@ import PgQuery from "./PgQuery";
 import AssertUtils from "@norjs/utils/src/AssertUtils";
 import { PgQuerySymbol } from "./PgQuerySymbol";
 import { PgSelectOptions } from "./PgSelectOptions";
+import { PgOperator } from "./PgOperator";
+import { PgOperatorFormat } from "./PgOperatorFormat";
+import StringUtils from "@norjs/utils/src/StringUtils";
 
 const MODULE_NAME = 'PgQueryUtils';
+
+const OP_KEYS = _.keys(PgOperator);
+const OP_VALUES = _.map(OP_KEYS, key => PgOperator[key]);
+const OP_FORMATS = _.map(OP_KEYS, key => PgOperatorFormat[key]);
 
 const nrLog = LogUtils.getLogger(MODULE_NAME);
 
@@ -312,7 +319,7 @@ export class PgQueryUtils {
     /**
      *
      * @param queryValues {Array.<*>}
-     * @param where {Object.<string, string|Symbol>|undefined}
+     * @param where {WhereObject|undefined}
      * @returns {any}
      * @private
      */
@@ -324,6 +331,47 @@ export class PgQueryUtils {
 
             if ( value === PgQuerySymbol.NOW ) {
                 return `${key} = NOW()`;
+            }
+
+            if ( _.isArray(value) ) {
+
+                if (value.length === 0) {
+                    throw new TypeError(`${this.nrName}._parseWhereList(): array value was empty`);
+                }
+
+                const operator = value.shift();
+
+                AssertUtils.isString(operator);
+
+                const index = OP_VALUES.indexOf(operator);
+                if (index < 0) {
+                    throw new TypeError(`${this.nrName}._parseWhereList(): Unknown operator: "${operator}"`);
+                }
+
+                const opFormat = OP_FORMATS[index];
+
+                const paramPlaceholders = _.concat(
+                    [
+                        `${key}`
+                    ],
+                    _.map(value, v => {
+
+                        const valueIndex = queryValues.indexOf(v);
+
+                        if (valueIndex >= 0) {
+                            return `$${valueIndex + 1}`;
+                        }
+
+                        queryValues.push(v);
+
+                        return `$${queryValues.length}`;
+
+                    })
+
+                );
+
+                return StringUtils.strictFormatStringWithArray(opFormat, paramPlaceholders);
+
             }
 
             const valueIndex = queryValues.indexOf(value);

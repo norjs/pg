@@ -1,6 +1,22 @@
 import AssertUtils from "@norjs/utils/Assert";
 
 /**
+ * This is an object which configures a WHERE clause.
+ *
+ * The property keyword is the field name.
+ *
+ * The property value is either:
+ *
+ *   1) a strict value (string, boolean, number, null, undefined) to match for, or
+ *
+ *   2) a special symbol with special meaning,
+ *
+ *   3)
+ *
+ * @typedef {Object<string, string|boolean|number|null|undefined|symbol|array>} WhereObject
+ */
+
+/**
  *
  * FIXME: Implement support for LIMIT/OFFSET
  */
@@ -13,7 +29,7 @@ export class PgSelectOptions {
 
         /**
          *
-         * @member {Object<string, string>|undefined}
+         * @member {WhereObject|undefined}
          * @private
          */
         this._where = undefined;
@@ -29,7 +45,7 @@ export class PgSelectOptions {
 
     /**
      *
-     * @returns {Object<string, string>|undefined}
+     * @returns {WhereObject|undefined}
      */
     get where () {
         return this._where;
@@ -45,7 +61,7 @@ export class PgSelectOptions {
 
     /**
      *
-     * @param where {Object<string, string>|undefined}
+     * @param where {WhereObject|undefined}
      */
     setWhere (where) {
 
