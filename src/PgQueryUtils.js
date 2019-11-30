@@ -312,6 +312,11 @@ export class PgQueryUtils {
             queryString += ` ORDER BY ${ orderBy.join(', ') }`;
         }
 
+        const limit = options.limit;
+        if ( limit !== undefined ) {
+            queryString += ` LIMIT ${ limit }`;
+        }
+
         return new PgQuery(queryString, queryValues);
 
     }

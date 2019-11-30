@@ -36,6 +36,13 @@ export class PgSelectOptions {
 
         /**
          *
+         * @member {number|undefined}
+         * @private
+         */
+        this._limit = undefined;
+
+        /**
+         *
          * @member {Array.<string>|undefined}
          * @private
          */
@@ -61,6 +68,14 @@ export class PgSelectOptions {
 
     /**
      *
+     * @returns {Number|undefined}
+     */
+    get limit () {
+        return this._limit;
+    }
+
+    /**
+     *
      * @param where {WhereObject|undefined}
      */
     setWhere (where) {
@@ -80,6 +95,18 @@ export class PgSelectOptions {
         if (orderBy !== undefined) AssertUtils.isArray(orderBy);
 
         this._orderBy = orderBy;
+
+    }
+
+    /**
+     *
+     * @param limit {number|undefined}
+     */
+    setLimit (limit) {
+
+        if (limit !== undefined) AssertUtils.isNumber(limit);
+
+        this._limit = limit;
 
     }
 
