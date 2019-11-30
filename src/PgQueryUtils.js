@@ -308,8 +308,14 @@ export class PgQueryUtils {
         }
 
         const orderBy = options.orderBy;
+
         if ( orderBy && orderBy.length ) {
-            queryString += ` ORDER BY ${ orderBy.join(', ') }`;
+            queryString += ` ORDER BY ${ _.map(orderBy, o => {
+                if (_.isArray(o)) {
+                    return o.join(' ');
+                }
+                return o;
+            }).join(', ') }`;
         }
 
         const limit = options.limit;

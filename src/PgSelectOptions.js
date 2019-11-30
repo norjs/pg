@@ -43,7 +43,7 @@ export class PgSelectOptions {
 
         /**
          *
-         * @member {Array.<string>|undefined}
+         * @member {Array.<string|Array.<string>>|undefined}
          * @private
          */
         this._orderBy = undefined;
@@ -60,7 +60,7 @@ export class PgSelectOptions {
 
     /**
      *
-     * @returns {Array<string>|undefined}
+     * @returns {Array.<string|Array.<string>>|undefined}
      */
     get orderBy () {
         return this._orderBy;
@@ -88,7 +88,7 @@ export class PgSelectOptions {
 
     /**
      *
-     * @param orderBy {Array.<string>|undefined}
+     * @param orderBy {Array.<string|Array.<string>>|undefined}
      */
     setOrderBy (orderBy) {
 
