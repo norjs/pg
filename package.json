@@ -4,7 +4,7 @@
   "description": "NorJS PostgreSQL library for NodeJS",
   "main": "./src/NrPostgresql.js",
   "scripts": {
-    "test": "mocha --require esm test/unit/**/*.spec.js",
+    "test": "mocha --full-trace --require esm test/unit/**/*.spec.js",
     "preversion": "npm test",
     "postversion": "git push && git push --tags",
     "jshint": "jshint src/",

@@ -266,8 +266,21 @@ export class NrPostgreSQL {
 
 	}
 
-	/** Commit transaction
+	/** Commit transaction without disconnecting
 	 *
+	 * @returns {Promise<NrPostgreSQL>}
+	 */
+	async commitOnly () {
+
+		await this.directQuery('COMMIT');
+
+		return this;
+
+	}
+
+	/** Commit transaction and disconnect from database
+	 *
+	 * @fixme This should probably be named as commitAndDisconnect()...
 	 * @returns {Promise<NrPostgreSQL>}
 	 */
 	async commit () {
